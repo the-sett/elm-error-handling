@@ -50,6 +50,8 @@ type alias ResultME err a =
     Result (Nonempty err) a
 
 
+{-| Produces a `ResultME` from a single error.
+-}
 error : err -> ResultME err a
 error err =
     err
@@ -57,11 +59,15 @@ error err =
         |> Err
 
 
+{-| Produces a `ResultME` from a list of errors.
+-}
 errors : err -> List err -> ResultME err a
 errors err errs =
     List.Nonempty.Nonempty err errs |> Err
 
 
+{-| Turns a `Result` into `ResultME` with one error.
+-}
 fromResult : Result err a -> ResultME err a
 fromResult result =
     case result of
@@ -72,6 +78,10 @@ fromResult result =
             Ok val
 
 
+{-| Combines 2 `ResultME`s together. If any of them have errors all the errors
+will be gathered. Otherwise the function supplied in the second one will be
+applied to the first, to produce the result value as `Ok`.
+-}
 combineApply : ResultME e a -> ResultME e (a -> b) -> ResultME e b
 combineApply ra rfn =
     case ( ra, rfn ) of
@@ -89,6 +99,10 @@ combineApply ra rfn =
                 |> Err
 
 
+{-| Combines 2 `ResultME`s together. If any of them have errors all the errors
+will be gathered. Otherwise the supplied function will be used to combine the
+result values as `Ok`.
+-}
 combine2 : (a -> b -> c) -> ResultME err a -> ResultME err b -> ResultME err c
 combine2 fun first second =
     case ( first, second ) of
@@ -106,6 +120,10 @@ combine2 fun first second =
                 |> Err
 
 
+{-| Combines 3 `ResultME`s together. If any of them have errors all the errors
+will be gathered. Otherwise the supplied function will be used to combine the
+result values as `Ok`.
+-}
 combine3 :
     (a -> b -> c -> d)
     -> ResultME err a
@@ -122,6 +140,10 @@ combine3 fun first second third =
                 (combine2 (flip fun) second first)
 
 
+{-| Combines 4 `ResultME`s together. If any of them have errors all the errors
+will be gathered. Otherwise the supplied function will be used to combine the
+result values as `Ok`.
+-}
 combine4 :
     (a -> b -> c -> d -> e)
     -> ResultME err a
@@ -139,6 +161,10 @@ combine4 fun first second third fourth =
                 (combine3 (flip fun) second first third)
 
 
+{-| Combines 6 `ResultME`s together. If any of them have errors all the errors
+will be gathered. Otherwise the supplied function will be used to combine the
+result values as `Ok`.
+-}
 combine5 :
     (a -> b -> c -> d -> e -> f)
     -> ResultME err a
@@ -157,6 +183,10 @@ combine5 fun first second third fourth fifth =
                 (combine4 (flip fun) second first third fourth)
 
 
+{-| Combines all errors in a `List` of `ResultME`s. All errors will
+be gathered in the case where there are any errors, otherwise a `List`
+of the result values will be returned as `Ok`.
+-}
 combineList : List (ResultME err a) -> ResultME err (List a)
 combineList results =
     List.foldl
@@ -178,6 +208,10 @@ combineList results =
         results
 
 
+{-| Combines all errors in a `Dict` of `ResultME`s. All errors will
+be gathered in the case where there are any errors, otherwise a `Dict`
+of the result values will be returned as `Ok`.
+-}
 combineDict : Dict comparable (ResultME err v) -> ResultME err (Dict comparable v)
 combineDict results =
     Dict.foldl
@@ -199,6 +233,10 @@ combineDict results =
         results
 
 
+{-| Combines all errors in a `Nonempty` list of `ResultME`s. All errors will
+be gathered in the case where there are any errors, otherwise a `Nonempty` list
+of the result values will be returned as `Ok`.
+-}
 combineNonempty : Nonempty (ResultME err a) -> ResultME err (Nonempty a)
 combineNonempty (Nonempty head tail) =
     List.foldl
@@ -220,21 +258,30 @@ combineNonempty (Nonempty head tail) =
         tail
 
 
+{-| Applies a function to the result value in a `ResultME`, if there is one.
+-}
 map : (a -> b) -> ResultME err a -> ResultME err b
 map =
     Result.map
 
 
+{-| Applies a function to the error in a `ResultME`, if there is one.
+-}
 mapError : (x -> y) -> ResultME x a -> ResultME y a
 mapError fun result =
     Result.mapError (List.Nonempty.map fun) result
 
 
+{-| Chain together a sequence of computations that may fail. This is identical
+to `Result.andThen`.
+-}
 andThen : (a -> ResultME err b) -> ResultME err a -> ResultME err b
 andThen =
     Result.andThen
 
 
+{-| Flattens the structure if one `ResultME` is nested inside another.
+-}
 flatten : ResultME err (ResultME err a) -> ResultME err a
 flatten res =
     case res of
