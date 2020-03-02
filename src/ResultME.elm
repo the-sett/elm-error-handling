@@ -1,9 +1,8 @@
 module ResultME exposing
     ( ResultME, error, errors, fromResult
-    , combineApply, combine2, combine3, combine4, combine5
-    , combineList, combineDict, combineNonempty
-    , map
+    , map, map2, map3, map4, map5, andMap
     , mapError
+    , combineList, combineDict, combineNonempty
     , andThen, flatten
     )
 
@@ -22,16 +21,15 @@ multiple syntax errors.
 @docs ResultME, error, errors, fromResult
 
 
-# Combining errors from multiple sources together
-
-@docs combineApply, combine2, combine3, combine4, combine5
-@docs combineList, combineDict, combineNonempty
-
-
 # Mapping
 
-@docs map
+@docs map, map2, map3, map4, map5, andMap
 @docs mapError
+
+
+# Combining errors over collections
+
+@docs combineList, combineDict, combineNonempty
 
 
 # Chaining
@@ -82,8 +80,8 @@ fromResult result =
 will be gathered. Otherwise the function supplied in the second one will be
 applied to the first, to produce the result value as `Ok`.
 -}
-combineApply : ResultME e a -> ResultME e (a -> b) -> ResultME e b
-combineApply ra rfn =
+andMap : ResultME e a -> ResultME e (a -> b) -> ResultME e b
+andMap ra rfn =
     case ( ra, rfn ) of
         ( Ok a, Ok fun ) ->
             fun a |> Ok
@@ -103,8 +101,8 @@ combineApply ra rfn =
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
-combine2 : (a -> b -> c) -> ResultME err a -> ResultME err b -> ResultME err c
-combine2 fun first second =
+map2 : (a -> b -> c) -> ResultME err a -> ResultME err b -> ResultME err c
+map2 fun first second =
     case ( first, second ) of
         ( Ok checkedArg, Ok checkedRes ) ->
             fun checkedArg checkedRes |> Ok
@@ -124,48 +122,48 @@ combine2 fun first second =
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
-combine3 :
+map3 :
     (a -> b -> c -> d)
     -> ResultME err a
     -> ResultME err b
     -> ResultME err c
     -> ResultME err d
-combine3 fun first second third =
+map3 fun first second third =
     case first of
         Ok checkedFirst ->
-            combine2 (fun checkedFirst) second third
+            map2 (fun checkedFirst) second third
 
         Err errFirst ->
-            combineApply third
-                (combine2 (flip fun) second first)
+            andMap third
+                (map2 (flip fun) second first)
 
 
 {-| Combines 4 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
-combine4 :
+map4 :
     (a -> b -> c -> d -> e)
     -> ResultME err a
     -> ResultME err b
     -> ResultME err c
     -> ResultME err d
     -> ResultME err e
-combine4 fun first second third fourth =
+map4 fun first second third fourth =
     case first of
         Ok checkedFirst ->
-            combine3 (fun checkedFirst) second third fourth
+            map3 (fun checkedFirst) second third fourth
 
         Err errFirst ->
-            combineApply fourth
-                (combine3 (flip fun) second first third)
+            andMap fourth
+                (map3 (flip fun) second first third)
 
 
 {-| Combines 6 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
-combine5 :
+map5 :
     (a -> b -> c -> d -> e -> f)
     -> ResultME err a
     -> ResultME err b
@@ -173,14 +171,14 @@ combine5 :
     -> ResultME err d
     -> ResultME err e
     -> ResultME err f
-combine5 fun first second third fourth fifth =
+map5 fun first second third fourth fifth =
     case first of
         Ok checkedFirst ->
-            combine4 (fun checkedFirst) second third fourth fifth
+            map4 (fun checkedFirst) second third fourth fifth
 
         Err errFirst ->
-            combineApply fifth
-                (combine4 (flip fun) second first third fourth)
+            andMap fifth
+                (map4 (flip fun) second first third fourth)
 
 
 {-| Combines all errors in a `List` of `ResultME`s. All errors will
