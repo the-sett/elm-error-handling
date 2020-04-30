@@ -1,6 +1,6 @@
 module ResultME exposing
     ( ResultME, error, errors, fromResult
-    , map, map2, map3, map4, map5, andMap
+    , map, map2, map3, map4, map5, map6, andMap
     , mapError
     , combineList, combineDict, combineNonempty
     , andThen, flatten
@@ -23,7 +23,7 @@ multiple syntax errors.
 
 # Mapping
 
-@docs map, map2, map3, map4, map5, andMap
+@docs map, map2, map3, map4, map5, map6, andMap
 @docs mapError
 
 
