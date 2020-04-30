@@ -181,6 +181,29 @@ map5 fun first second third fourth fifth =
                 (map4 (flip fun) second first third fourth)
 
 
+{-| Combines 7 `ResultME`s together. If any of them have errors all the errors
+will be gathered. Otherwise the supplied function will be used to combine the
+result values as `Ok`.
+-}
+map6 :
+    (a -> b -> c -> d -> e -> f -> g)
+    -> ResultME err a
+    -> ResultME err b
+    -> ResultME err c
+    -> ResultME err d
+    -> ResultME err e
+    -> ResultME err f
+    -> ResultME err g
+map6 fun first second third fourth fifth sixth =
+    case first of
+        Ok checkedFirst ->
+            map5 (fun checkedFirst) second third fourth fifth sixth
+
+        Err errFirst ->
+            andMap sixth
+                (map5 (flip fun) second first third fourth fifth)
+
+
 {-| Combines all errors in a `List` of `ResultME`s. All errors will
 be gathered in the case where there are any errors, otherwise a `List`
 of the result values will be returned as `Ok`.
