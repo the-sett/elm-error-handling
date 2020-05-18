@@ -3,7 +3,7 @@
     "name": "the-sett/elm-error-handling",
     "summary": "Tools for more elaborate error handling than Result.",
     "license": "BSD-3-Clause",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "exposed-modules": [
         "ResultME"
     ],

@@ -1,6 +1,6 @@
 module ResultME exposing
     ( ResultME, error, errors, fromResult
-    , map, map2, map3, map4, map5, map6, andMap
+    , map, map2, map3, map4, map5, map6, map7, andMap
     , mapError
     , combineList, combineDict, combineNonempty
     , andThen, flatten
@@ -23,7 +23,7 @@ multiple syntax errors.
 
 # Mapping
 
-@docs map, map2, map3, map4, map5, map6, andMap
+@docs map, map2, map3, map4, map5, map6, map7, andMap
 @docs mapError
 
 
@@ -202,6 +202,30 @@ map6 fun first second third fourth fifth sixth =
         Err errFirst ->
             andMap sixth
                 (map5 (flip fun) second first third fourth fifth)
+
+
+{-| Combines 8 `ResultME`s together. If any of them have errors all the errors
+will be gathered. Otherwise the supplied function will be used to combine the
+result values as `Ok`.
+-}
+map7 :
+    (a -> b -> c -> d -> e -> f -> g -> h)
+    -> ResultME err a
+    -> ResultME err b
+    -> ResultME err c
+    -> ResultME err d
+    -> ResultME err e
+    -> ResultME err f
+    -> ResultME err g
+    -> ResultME err h
+map7 fun first second third fourth fifth sixth seventh =
+    case first of
+        Ok checkedFirst ->
+            map6 (fun checkedFirst) second third fourth fifth sixth seventh
+
+        Err errFirst ->
+            andMap seventh
+                (map6 (flip fun) second first third fourth fifth sixth)
 
 
 {-| Combines all errors in a `List` of `ResultME`s. All errors will
