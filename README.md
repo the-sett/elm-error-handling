@@ -4,7 +4,7 @@
 
 # elm-error-handling
 
-This package aims to privde support for more advanced error handling, than `Result` alone provides.
+This package aims to provide support for more advanced error handling, than `Result` alone provides.
 
 In particular it defines a `ResultME` type which stands for result-with-multiple-errors. This is useful in situations where multiple errors can be detected in a single pass, and it is preferable to report all errors detected, and not to fail only on the first error.
 
