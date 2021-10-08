@@ -159,7 +159,7 @@ map4 fun first second third fourth =
                 (map3 (flip fun) second first third)
 
 
-{-| Combines 6 `ResultME`s together. If any of them have errors all the errors
+{-| Combines 5 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
@@ -181,7 +181,7 @@ map5 fun first second third fourth fifth =
                 (map4 (flip fun) second first third fourth)
 
 
-{-| Combines 7 `ResultME`s together. If any of them have errors all the errors
+{-| Combines 6 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
@@ -204,7 +204,7 @@ map6 fun first second third fourth fifth sixth =
                 (map5 (flip fun) second first third fourth fifth)
 
 
-{-| Combines 8 `ResultME`s together. If any of them have errors all the errors
+{-| Combines 7 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
