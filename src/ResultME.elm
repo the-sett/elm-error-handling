@@ -310,7 +310,7 @@ map =
     Result.map
 
 
-{-| Applies a function to the error in a `ResultME`, if there is one.
+{-| Applies a function to the errors in a `ResultME`, if there are any.
 -}
 mapError : (x -> y) -> ResultME x a -> ResultME y a
 mapError fun result =
