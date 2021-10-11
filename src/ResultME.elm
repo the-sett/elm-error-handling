@@ -236,11 +236,11 @@ of the result values will be returned as `Ok`.
 
     ResultME.combineList
         [ Ok "this is fine"
-        , ResultME.errors "very" [ "bad" ]
+        , ResultME.errors "failure" [ "problem" ]
         , ResultME.error "error"
         , Ok "done"
         ]
-    --> ResultME.errors "very" [ "bad", "error" ]
+    --> ResultME.errors "failure" [ "problem", "error" ]
 
     ResultME.combineList
         [ Ok "ok"
@@ -281,8 +281,9 @@ of the result values will be returned as `Ok`.
     ResultME.combineDict
         (Dict.fromList
             [ ( "3", Ok 3 )
-            , ( "2", Ok 2 )
-            , ( "1", Ok 1 )
+            , ( "-4", Ok -4 )
+            , ( "20xFF", Ok 255 )
+
             ]
         )
     --> Ok
@@ -296,12 +297,20 @@ of the result values will be returned as `Ok`.
     ResultME.combineDict
         (Dict.fromList
             [ ( "3", Ok 3 )
-            , ( "-:-)", ResultME.error "not a number" )
-            , ( "1.2", ResultME.error "not an integer" )
+            , ( "1.2", ResultME.error "can't contain '.'" )
             , ( "-4", Ok -4 )
+            , ( "#:-3"
+              , ResultME.errors
+                  "can't contain '#'"
+                  [ "can't contain ':'" ]
+              )
             ]
         )
-    --> ResultME.errors "not a number" [ "not an integer" ]
+    --> ResultME.errors
+    -->     "can't contain '.'"
+    -->     [ "can't contain '#'"
+    -->     , "can't contain ':'"
+    -->     ]
 
 -}
 combineDict : Dict comparable (ResultME err v) -> ResultME err (Dict comparable v)
@@ -335,12 +344,12 @@ of the result values will be returned as `Ok`.
     ResultME.combineNonempty
         (List.Nonempty.Nonempty
             (Ok "this is fine")
-            [ ResultME.errors "very" [ "bad" ]
+            [ ResultME.errors "failure" [ "problem" ]
             , ResultME.error "error"
             , Ok "done"
             ]
         )
-    --> ResultME.errors "very" [ "bad", "error" ]
+    --> ResultME.errors "failure" [ "bad", "problem" ]
 
     ResultME.combineNonempty
         (List.Nonempty.Nonempty
