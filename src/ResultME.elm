@@ -231,6 +231,24 @@ map7 fun first second third fourth fifth sixth seventh =
 {-| Combines all errors in a `List` of `ResultME`s. All errors will
 be gathered in the case where there are any errors, otherwise a `List`
 of the result values will be returned as `Ok`.
+
+    import ResultME
+
+    ResultME.combineList
+        [ Ok "this is fine"
+        , ResultME.errors "very" [ "bad" ]
+        , ResultME.error "error"
+        , Ok "done"
+        ]
+    --> ResultME.errors "very" [ "bad", "error" ]
+
+    ResultME.combineList
+        [ Ok "ok"
+        , Ok "result"
+        , Ok "value"
+        ]
+    --> Ok [ "ok", "result", "value" ]
+
 -}
 combineList : List (ResultME err a) -> ResultME err (List a)
 combineList results =
@@ -256,6 +274,35 @@ combineList results =
 {-| Combines all errors in a `Dict` of `ResultME`s. All errors will
 be gathered in the case where there are any errors, otherwise a `Dict`
 of the result values will be returned as `Ok`.
+
+    import ResultME
+    import Dict
+
+    ResultME.combineDict
+        (Dict.fromList
+            [ ( "3", Ok 3 )
+            , ( "2", Ok 2 )
+            , ( "1", Ok 1 )
+            ]
+        )
+    --> Ok
+    -->     (Dict.fromList
+    -->         [ ( "3", 3 )
+    -->         , ( "2", 2 )
+    -->         , ( "1", 1 )
+    -->         ]
+    -->     )
+
+    ResultME.combineDict
+        (Dict.fromList
+            [ ( "3", Ok 3 )
+            , ( "-:-)", ResultME.error "not a number" )
+            , ( "1.2", ResultME.error "not an integer" )
+            , ( "-4", Ok -4 )
+            ]
+        )
+    --> ResultME.errors "not a number" [ "not an integer" ]
+
 -}
 combineDict : Dict comparable (ResultME err v) -> ResultME err (Dict comparable v)
 combineDict results =
@@ -272,7 +319,7 @@ combineDict results =
                     Err errAccum
 
                 ( Err err, Err errAccum ) ->
-                    List.Nonempty.append err errAccum |> Err
+                    List.Nonempty.append errAccum err |> Err
         )
         (Ok Dict.empty)
         results
@@ -281,10 +328,37 @@ combineDict results =
 {-| Combines all errors in a `Nonempty` list of `ResultME`s. All errors will
 be gathered in the case where there are any errors, otherwise a `Nonempty` list
 of the result values will be returned as `Ok`.
+
+    import ResultME
+    import List.Nonempty
+
+    ResultME.combineNonempty
+        (List.Nonempty.Nonempty
+            (Ok "this is fine")
+            [ ResultME.errors "very" [ "bad" ]
+            , ResultME.error "error"
+            , Ok "done"
+            ]
+        )
+    --> ResultME.errors "very" [ "bad", "error" ]
+
+    ResultME.combineNonempty
+        (List.Nonempty.Nonempty
+            (Ok "ok")
+            [ Ok "result"
+            , Ok "value"
+            ]
+        )
+    --> Ok
+    -->     (List.Nonempty.Nonempty
+    -->         "ok"
+    -->         [ "result", "value" ]
+    -->     )
+
 -}
 combineNonempty : Nonempty (ResultME err a) -> ResultME err (Nonempty a)
 combineNonempty (Nonempty head tail) =
-    List.foldr
+    List.foldl
         (\result accumRes ->
             case ( result, accumRes ) of
                 ( Ok val, Ok accum ) ->
@@ -297,10 +371,11 @@ combineNonempty (Nonempty head tail) =
                     Err errAccum
 
                 ( Err err, Err errAccum ) ->
-                    List.Nonempty.append err errAccum |> Err
+                    List.Nonempty.append errAccum err |> Err
         )
         (Result.map List.Nonempty.singleton head)
         tail
+        |> map List.Nonempty.reverse
 
 
 {-| Applies a function to the result value in a `ResultME`, if there is one.
