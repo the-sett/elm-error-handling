@@ -234,7 +234,7 @@ of the result values will be returned as `Ok`.
 -}
 combineList : List (ResultME err a) -> ResultME err (List a)
 combineList results =
-    List.foldl
+    List.foldr
         (\result accumRes ->
             case ( result, accumRes ) of
                 ( Ok val, Ok accum ) ->
@@ -284,7 +284,7 @@ of the result values will be returned as `Ok`.
 -}
 combineNonempty : Nonempty (ResultME err a) -> ResultME err (Nonempty a)
 combineNonempty (Nonempty head tail) =
-    List.foldl
+    List.foldr
         (\result accumRes ->
             case ( result, accumRes ) of
                 ( Ok val, Ok accum ) ->
