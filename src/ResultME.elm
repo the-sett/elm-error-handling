@@ -53,7 +53,7 @@ type alias ResultME err a =
 error : err -> ResultME err a
 error err =
     err
-        |> List.Nonempty.fromElement
+        |> List.Nonempty.singleton
         |> Err
 
 
@@ -299,7 +299,7 @@ combineNonempty (Nonempty head tail) =
                 ( Err err, Err errAccum ) ->
                     List.Nonempty.append err errAccum |> Err
         )
-        (Result.map List.Nonempty.fromElement head)
+        (Result.map List.Nonempty.singleton head)
         tail
 
 
