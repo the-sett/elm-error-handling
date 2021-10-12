@@ -53,7 +53,7 @@ type alias ResultME err a =
 error : err -> ResultME err a
 error err =
     err
-        |> List.Nonempty.fromElement
+        |> List.Nonempty.singleton
         |> Err
 
 
@@ -159,7 +159,7 @@ map4 fun first second third fourth =
                 (map3 (flip fun) second first third)
 
 
-{-| Combines 6 `ResultME`s together. If any of them have errors all the errors
+{-| Combines 5 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
@@ -181,7 +181,7 @@ map5 fun first second third fourth fifth =
                 (map4 (flip fun) second first third fourth)
 
 
-{-| Combines 7 `ResultME`s together. If any of them have errors all the errors
+{-| Combines 6 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
@@ -204,7 +204,7 @@ map6 fun first second third fourth fifth sixth =
                 (map5 (flip fun) second first third fourth fifth)
 
 
-{-| Combines 8 `ResultME`s together. If any of them have errors all the errors
+{-| Combines 7 `ResultME`s together. If any of them have errors all the errors
 will be gathered. Otherwise the supplied function will be used to combine the
 result values as `Ok`.
 -}
@@ -231,10 +231,28 @@ map7 fun first second third fourth fifth sixth seventh =
 {-| Combines all errors in a `List` of `ResultME`s. All errors will
 be gathered in the case where there are any errors, otherwise a `List`
 of the result values will be returned as `Ok`.
+
+    import ResultME
+
+    ResultME.combineList
+        [ Ok "this is fine"
+        , ResultME.errors "failure" [ "problem" ]
+        , ResultME.error "error"
+        , Ok "done"
+        ]
+    --> ResultME.errors "failure" [ "problem", "error" ]
+
+    ResultME.combineList
+        [ Ok "ok"
+        , Ok "result"
+        , Ok "value"
+        ]
+    --> Ok [ "ok", "result", "value" ]
+
 -}
 combineList : List (ResultME err a) -> ResultME err (List a)
 combineList results =
-    List.foldl
+    List.foldr
         (\result accumRes ->
             case ( result, accumRes ) of
                 ( Ok val, Ok accum ) ->
@@ -256,6 +274,44 @@ combineList results =
 {-| Combines all errors in a `Dict` of `ResultME`s. All errors will
 be gathered in the case where there are any errors, otherwise a `Dict`
 of the result values will be returned as `Ok`.
+
+    import ResultME
+    import Dict
+
+    ResultME.combineDict
+        (Dict.fromList
+            [ ( "3", Ok 3 )
+            , ( "-4", Ok -4 )
+            , ( "20xFF", Ok 255 )
+
+            ]
+        )
+    --> Ok
+    -->     (Dict.fromList
+    -->         [ ( "3", 3 )
+    -->         , ( "2", 2 )
+    -->         , ( "1", 1 )
+    -->         ]
+    -->     )
+
+    ResultME.combineDict
+        (Dict.fromList
+            [ ( "3", Ok 3 )
+            , ( "1.2", ResultME.error "can't contain '.'" )
+            , ( "-4", Ok -4 )
+            , ( "#:-3"
+              , ResultME.errors
+                  "can't contain '#'"
+                  [ "can't contain ':'" ]
+              )
+            ]
+        )
+    --> ResultME.errors
+    -->     "can't contain '.'"
+    -->     [ "can't contain '#'"
+    -->     , "can't contain ':'"
+    -->     ]
+
 -}
 combineDict : Dict comparable (ResultME err v) -> ResultME err (Dict comparable v)
 combineDict results =
@@ -272,7 +328,7 @@ combineDict results =
                     Err errAccum
 
                 ( Err err, Err errAccum ) ->
-                    List.Nonempty.append err errAccum |> Err
+                    List.Nonempty.append errAccum err |> Err
         )
         (Ok Dict.empty)
         results
@@ -281,6 +337,33 @@ combineDict results =
 {-| Combines all errors in a `Nonempty` list of `ResultME`s. All errors will
 be gathered in the case where there are any errors, otherwise a `Nonempty` list
 of the result values will be returned as `Ok`.
+
+    import ResultME
+    import List.Nonempty
+
+    ResultME.combineNonempty
+        (List.Nonempty.Nonempty
+            (Ok "this is fine")
+            [ ResultME.errors "failure" [ "problem" ]
+            , ResultME.error "error"
+            , Ok "done"
+            ]
+        )
+    --> ResultME.errors "failure" [ "bad", "problem" ]
+
+    ResultME.combineNonempty
+        (List.Nonempty.Nonempty
+            (Ok "ok")
+            [ Ok "result"
+            , Ok "value"
+            ]
+        )
+    --> Ok
+    -->     (List.Nonempty.Nonempty
+    -->         "ok"
+    -->         [ "result", "value" ]
+    -->     )
+
 -}
 combineNonempty : Nonempty (ResultME err a) -> ResultME err (Nonempty a)
 combineNonempty (Nonempty head tail) =
@@ -297,10 +380,11 @@ combineNonempty (Nonempty head tail) =
                     Err errAccum
 
                 ( Err err, Err errAccum ) ->
-                    List.Nonempty.append err errAccum |> Err
+                    List.Nonempty.append errAccum err |> Err
         )
-        (Result.map List.Nonempty.fromElement head)
+        (Result.map List.Nonempty.singleton head)
         tail
+        |> map List.Nonempty.reverse
 
 
 {-| Applies a function to the result value in a `ResultME`, if there is one.
@@ -310,7 +394,7 @@ map =
     Result.map
 
 
-{-| Applies a function to the error in a `ResultME`, if there is one.
+{-| Applies a function to the errors in a `ResultME`, if there are any.
 -}
 mapError : (x -> y) -> ResultME x a -> ResultME y a
 mapError fun result =
