@@ -3,6 +3,7 @@ module ResultME exposing
     , map, map2, map3, map4, map5, map6, map7, andMap
     , mapError
     , combineList, combineDict, combineNonempty
+    , combineMap
     , andThen, flatten
     )
 
@@ -30,6 +31,7 @@ multiple syntax errors.
 # Combining errors over collections
 
 @docs combineList, combineDict, combineNonempty
+@docs combineMap
 
 
 # Chaining
@@ -269,6 +271,34 @@ combineList results =
         )
         (Ok [])
         results
+
+
+{-| Map a function producing results on a list
+and combine those into a single result (holding a list).
+Also known as `traverse` on lists.
+
+    combineMap f xs == combineList (List.map f xs)
+
+-}
+combineMap : (a -> ResultME err b) -> List a -> ResultME err (List b)
+combineMap f ls =
+    List.foldr
+        (\elem accumRes ->
+            case ( f elem, accumRes ) of
+                ( Ok val, Ok accum ) ->
+                    val :: accum |> Ok
+
+                ( Err err, Ok _ ) ->
+                    Err err
+
+                ( Ok _, Err errAccum ) ->
+                    Err errAccum
+
+                ( Err err, Err errAccum ) ->
+                    List.Nonempty.append err errAccum |> Err
+        )
+        (Ok [])
+        ls
 
 
 {-| Combines all errors in a `Dict` of `ResultME`s. All errors will
